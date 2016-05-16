@@ -1,0 +1,298 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/paper-card/paper-card.html">
+<link rel="import" href="bower_components/firebase-element/firebase-collection.html">
+<link rel="import" href="slack-input.html">
+<!--
+# slack-client
+
+`<slack-client>` a collection  of elements representing a client for Slack Realtime Messaging API
+
+[API Docs and Demo](https://heka-house-slack-client-demo.firebaseapp.com/)
+
+[Source](http://github.com/hekahouse/slack-client/)
+
+The label is set to the path of the value.
+
+## Install
+
+    bower install --save HekaHouse/slack-client
+
+## Example
+    <slack-client
+      route="ACTIVE-ROUTE"
+      path="DISPLAY-ROUTE"
+      team="SLACK-TEAM"
+      oauth-callback="OAUTH-CALLBACK-URL"
+      client-id-path="PATH-TO-ID-ON-FIREBASE"
+      client-secret-path="PATH-TO-SECRET-ON-FIREBASE"></slack-client>
+
+In the above example replace:
+
+ACTIVE-ROUTE - currently selected route
+
+DISPLAY-ROUTE - the route used to display this element
+
+SLACK-TEAM - the team you want to connect to
+
+OAUTH-CALLBACK-URL - the OAuth callback you configured for your Slack app (should be full URL of DISPLAY-ROUTE)
+
+PATH-TO-ID-ON-FIREBASE - the Firebase path to Slack client id
+
+PATH-TO-SECRET-ON-FIREBASE - the Firebase path to Slack client secret
+
+## Note
+
+Make sure you have appropriate Firebase rules and authentication set for Slack client id and secret
+
+## Dependencies
+
+Element dependencies are managed via [Bower](http://bower.io/). You can
+install that via:
+
+    npm install -g bower
+
+Then, go ahead and download the element's dependencies:
+
+    bower install
+
+slack-client depends on:
+
+[slack-auth](https://heka-house-slack-client-demo.firebaseapp.com/slack-auth)
+
+and
+
+[slack-socket](https://heka-house-slack-demo.firebaseapp.com/slack-socket)
+
+## Related
+
+slack-client is designed for use with:
+
+[slack-input](https://heka-house-slack-demo.firebaseapp.com/slack-input)
+
+and
+
+[slack-messages](https://heka-house-slack-demo.firebaseapp.com/slack-messages) -->
+
+<dom-module id="slack-messages">
+  <template>
+
+    <style>
+      :host {
+        display: block;
+      }
+      img{
+        width: 64px;
+        height: auto;
+      }
+      .entry {
+          margin: 8px;
+          padding: 8px;
+          display: flex;
+          flex-direction: row;
+          flex-wrap: nowrap;
+          justify-content: flex-start;
+          width: 100%;
+      }
+      .entry paper-input {
+          width: 100%;
+      }
+      .entry paper-button {
+          margin: auto;
+      }
+      .messageSenderName: {
+          margin: 8px;
+      }
+      .messageCreated: {
+          margin: 8px;
+          font-style: italic;
+      }
+      .messageBody {
+          margin: 8px;
+          padding: 8px;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;
+      }
+      .messageBody .messagePhoto: {
+          width: 64px;
+          height: auto;
+          margin: 8px;
+      }
+      .message.style-scope.slack-messages {
+          display: flex;
+          flex-direction: row;
+          justify-content: flex-start;
+      }
+
+      .message.style-scope.slack-messages div {
+          margin-right: 8px;
+      }
+      paper-card.message-body.style-scope.slack-messages.x-scope.paper-card-0 {
+          background: #E6E6E6;
+          border-radius: 7px;
+          margin: 8px;
+          padding-left: 8px;
+      }
+      div.message.style-scope.slack-messages {
+        padding: 2px;
+        border-radius: 17px;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+      }
+      div.messageText.style-scope.slack-messages {
+        background: #fff;
+        padding: 8px;
+        border-radius: 17px;
+      }
+      .messageSenderName.style-scope.slack-messages {
+        text-align: center;
+      }
+      .volunteer-com-container {
+          margin: 8px;
+          padding: 8px;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;
+      }
+      #messageContainer {
+          height: 500px;
+          padding: 8px;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;
+      }
+    </style>
+    <div class="volunteer-com-container">
+      <header>Volunteer Comm</header>
+      <br/>
+      <firebase-collection
+        id="channelFeed"
+        order-by-key
+        data="{{messages}}"></firebase-collection>
+      <div id="messageContainer">
+        <template is="dom-repeat" items="[[messages]]" as="message">
+          <paper-card class='message-body'>
+            <div class='message'>
+              <div>
+                {{message.user_name}}
+              </div>
+              <div class='messageText'>
+                [[message.text]]
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+      <slack-input channel-id="{{channelId}}"></slack-input>
+    </div>
+  </template>
+  <!--</template> -->
+<script>
+  (function() {
+    'use strict';
+    new Polymer({
+      is: 'slack-messages',
+      properties: {
+        messages: {
+          type: Array,
+          notify: true,
+          observer: 'messagesArrived'
+        },
+        users: {
+          type: Array,
+          notify: true
+        },
+        profiled: {
+          type: Object,
+          notify: true,
+          observer: 'requestMessages'
+        },
+        accessToken: {
+          type: String,
+          notify: true
+        },
+        channel: {
+          type: String,
+          notify: true,
+          observer: 'setChannel'
+        },
+        channelId: {
+          type: String,
+          notify: true,
+          computed: 'computeChannelId(channel, channels)'
+        },
+        channels: {
+          type: Array,
+          notify: true
+        }
+      },
+      computeChannelId: function(channel, channels) {
+          for (var i = 0; i < channels.length; ++i) {
+            if (channels[i].name === channel) {
+              return channels[i].id;
+            }
+          }
+          return "-1";
+      },
+      addMessage: function() {
+        this.fire('iron-signal', {name: 'slack-message-posted', data: JSON.stringify({
+          "text": this.$.messageInput.value,
+          "channel": this.channelId
+        })});
+        this.$.messageInput.value = "";
+      },
+      messagesArrived: function(messages) {
+        var observer = new MutationObserver(this.scrollToBottom);
+        observer.observe(this.$.messageContainer, {
+            childList: true,
+            subtree: true
+        });
+      },
+      messageAdded: function() {
+        this.scrollToBottom();
+      },
+      scrollToBottom: function() {
+        var out = document.querySelector('#messageContainer');
+        // allow 1px inaccuracy by adding 1
+        var isScrolledToBottom = out.scrollHeight - out.clientHeight >= out.scrollTop + 1;
+        if(isScrolledToBottom)
+          out.scrollTop = out.scrollHeight - out.clientHeight;
+      },
+      setChannel: function(channel) {
+        this.$.channelFeed.location = "https://grohio.firebaseio.com/slack/"+channel
+      },
+      requestMessages: function(profiled) {
+        if (this.channel) {
+          this.$.channelFeed.location = "https://grohio.firebaseio.com/slack/"+this.channel
+        }
+      },
+      formatDate: function(dateStr) {
+         var dated = new Date(dateStr);
+         var yyyy = dated.getFullYear().toString();
+         var mm = (dated.getMonth()+1).toString(); // getMonth() is zero-based
+         var dd  = dated.getDate().toString();
+         var today = new Date();
+         var yyyyT = today.getFullYear().toString();
+         var mmT = (today.getMonth()+1).toString(); // getMonth() is zero-based
+         var ddT  = today.getDate().toString();
+
+         if (yyyy+mm+dd === yyyyT+mmT+ddT) {
+         	var min = dated.getMinutes().toString();
+         	if (min.length < 2) {
+         		min = '0' + min;
+         	}
+            return dated.getHours()+":"+min;
+         } else {
+            return yyyy+'-'+mm+'-'+dd;
+         }
+      },
+      stripSize: function(url) {
+        return url.replace('type=large','');
+      }
+    });
+  })();
+</script>-
+</dom-module>

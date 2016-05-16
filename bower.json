@@ -1,0 +1,36 @@
+{
+  "name": "slack-client",
+  "version": "1.0.1",
+  "authors": [
+    "Aron Price <aron@heka.house>"
+  ],
+  "description": "authenticates a Slack client and enables posting messages to a channel.",
+  "keywords": [
+    "web-component",
+    "polymer",
+    "slack",
+    "firebase"
+  ],
+  "main": "slack-client.html",
+  "license": "https://heka-house-slack-demo.firebaseapp.com/LICENSE",
+  "homepage": "https://github.com/HekaHouse/slack-client/",
+  "ignore": [
+    "/.*",
+    "/test/"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.2.0",
+    "iron-ajax": "PolymerElements/iron-ajax",
+    "iron-collapse": "PolymerElements/iron-collapse",
+    "iron-icons": "PolymerElements/iron-icons",
+    "iron-signals": "PolymerElements/iron-signals",
+    "paper-button": "PolymerElements/paper-button",
+    "paper-card": "PolymerElements/paper-card",
+    "web-socket": "hph/web-socket",
+    "firebase-login": "HekaHouse/firebase-login"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "web-component-tester": "^4.0.0"
+  }
+}

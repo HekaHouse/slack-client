@@ -1,0 +1,169 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="bower_components/iron-signals/iron-signals.html">
+<link rel="import" href="bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="bower_components/paper-button/paper-button.html">
+<!--
+# slack-client
+
+`<slack-client>` a collection  of elements representing a client for Slack Realtime Messaging API
+
+[API Docs and Demo](https://heka-house-slack-client-demo.firebaseapp.com/)
+
+[Source](http://github.com/hekahouse/slack-client/)
+
+The label is set to the path of the value.
+
+## Install
+
+    bower install --save HekaHouse/slack-client
+
+## Example
+    <slack-client
+      route="ACTIVE-ROUTE"
+      path="DISPLAY-ROUTE"
+      team="SLACK-TEAM"
+      oauth-callback="OAUTH-CALLBACK-URL"
+      client-id-path="PATH-TO-ID-ON-FIREBASE"
+      client-secret-path="PATH-TO-SECRET-ON-FIREBASE"></slack-client>
+
+In the above example replace:
+
+ACTIVE-ROUTE - currently selected route
+
+DISPLAY-ROUTE - the route used to display this element
+
+SLACK-TEAM - the team you want to connect to
+
+OAUTH-CALLBACK-URL - the OAuth callback you configured for your Slack app (should be full URL of DISPLAY-ROUTE)
+
+PATH-TO-ID-ON-FIREBASE - the Firebase path to Slack client id
+
+PATH-TO-SECRET-ON-FIREBASE - the Firebase path to Slack client secret
+
+## Note
+
+Make sure you have appropriate Firebase rules and authentication set for Slack client id and secret
+
+## Dependencies
+
+Element dependencies are managed via [Bower](http://bower.io/). You can
+install that via:
+
+    npm install -g bower
+
+Then, go ahead and download the element's dependencies:
+
+    bower install
+
+slack-client depends on:
+
+[slack-auth](https://heka-house-slack-client-demo.firebaseapp.com/slack-auth)
+
+and
+
+[slack-socket](https://heka-house-slack-demo.firebaseapp.com/slack-socket)
+
+## Related
+
+slack-client is designed for use with:
+
+[slack-input](https://heka-house-slack-demo.firebaseapp.com/slack-input)
+
+and
+
+[slack-messages](https://heka-house-slack-demo.firebaseapp.com/slack-messages) -->
+
+<dom-module id="slack-input">
+  <template>
+
+    <style>
+      :host {
+        display: block;
+      }
+      .entry {
+          margin: 8px;
+          padding: 8px;
+          display: flex;
+          flex-direction: row;
+          flex-wrap: nowrap;
+          justify-content: flex-start;
+          width: 100%;
+      }
+      .entry paper-input {
+          width: 100%;
+      }
+      .entry paper-button {
+          margin: auto;
+      }
+      .slack-icon {
+        --iron-icon-height: 32px;
+        --iron-icon-width: 32px;
+      }
+    </style>
+
+
+
+
+      <iron-collapse id="collapseSlackSignup"  opened="{{!accessToken}}">
+        <span class='entry'>
+          <paper-button  raised on-tap="joinSlack">
+            Join Chat
+            <iron-icon icon="social:group-add"></iron-icon>
+          </paper-button>
+          <paper-button  raised on-tap="connectSlack">
+            Full member access
+            <iron-icon class="slack-icon" src="/images/touch/slack-mark.png"></iron-icon>
+          </paper-button>
+        </span>
+      </iron-collapse>
+      <iron-collapse id="collapseSlackInput" opened="{{accessToken}}">
+        <span class='entry'>
+          <paper-input label="Type here.." id="messageInput" maxLength="144" on-change='addMessage'></paper-input>
+          <paper-button  raised on-tap="addMessage">
+            <iron-icon icon="send"></iron-icon>
+          </paper-button>
+        </span>
+      </iron-collapse>
+
+    <iron-signals on-iron-signal-slack-access-granted="_accessGranted"></iron-signals>
+  </template>
+  <!--</template> -->
+<script>
+  (function() {
+    'use strict';
+    new Polymer({
+      is: 'slack-input',
+      properties: {
+        channelId: {
+          type: String,
+          notify: true
+        },
+        accessToken: {
+          type: Boolean,
+          notify: true,
+          value: false
+        }
+      },
+      joinSlack: function() {
+        window.open("http://grassroots-slack.herokuapp.com/");
+      },
+      connectSlack: function() {
+        this.fire('iron-signal', {name: 'slack-connect-init', data: ""});
+        this.$.messageInput.value = "";
+      },
+      addMessage: function() {
+        this.fire('iron-signal', {name: 'slack-message-posted', data: JSON.stringify({
+          "text": this.$.messageInput.value,
+          "channel": this.channelId
+        })});
+        this.$.messageInput.value = "";
+      },
+      _accessGranted: function(e, detail, sender) {
+        this.accessToken = true;
+      }
+    });
+  })();
+</script>-
+</dom-module>

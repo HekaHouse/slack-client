@@ -1,0 +1,170 @@
+<!--
+# slack-client
+
+`<slack-client>` a collection  of elements representing a client for Slack Realtime Messaging API
+
+[API Docs and Demo](https://heka-house-slack-client-demo.firebaseapp.com/)
+
+[Source](http://github.com/hekahouse/slack-client/)
+
+The label is set to the path of the value.
+
+## Install
+
+    bower install --save HekaHouse/slack-client
+
+## Example
+    <slack-client
+      route="ACTIVE-ROUTE"
+      path="DISPLAY-ROUTE"
+      team="SLACK-TEAM"
+      oauth-callback="OAUTH-CALLBACK-URL"
+      client-id-path="PATH-TO-ID-ON-FIREBASE"
+      client-secret-path="PATH-TO-SECRET-ON-FIREBASE"></slack-client>
+
+In the above example replace:
+
+ACTIVE-ROUTE - currently selected route
+
+DISPLAY-ROUTE - the route used to display this element
+
+SLACK-TEAM - the team you want to connect to
+
+OAUTH-CALLBACK-URL - the OAuth callback you configured for your Slack app (should be full URL of DISPLAY-ROUTE)
+
+PATH-TO-ID-ON-FIREBASE - the Firebase path to Slack client id
+
+PATH-TO-SECRET-ON-FIREBASE - the Firebase path to Slack client secret
+
+## Note
+
+Make sure you have appropriate Firebase rules and authentication set for Slack client id and secret
+
+## Dependencies
+
+Element dependencies are managed via [Bower](http://bower.io/). You can
+install that via:
+
+    npm install -g bower
+
+Then, go ahead and download the element's dependencies:
+
+    bower install
+
+slack-client depends on:
+
+[slack-auth](https://heka-house-slack-client-demo.firebaseapp.com/slack-auth)
+
+and
+
+[slack-socket](https://heka-house-slack-demo.firebaseapp.com/slack-socket)
+
+## Related
+
+slack-client is designed for use with:
+
+[slack-input](https://heka-house-slack-demo.firebaseapp.com/slack-input)
+
+and
+
+[slack-messages](https://heka-house-slack-demo.firebaseapp.com/slack-messages) -->
+
+
+<dom-module id="slack-socket">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+      }
+    </style>
+    <iron-ajax
+          url="https://slack.com/api/rtm.start"
+          id="rtmStart"
+          method="POST"
+          handle-as="json"
+          params="{{ajaxBody}}"
+          last-response="{{currentSlack}}"
+          debounce-duration="300"></iron-ajax>
+    <web-socket
+      id="rtmSocket"
+      url="{{rtmUrl}}"
+      json
+      on-open="_onOpen"
+      on-close="_onClose"
+      on-message="_onMessage"
+      on-error="_onError">
+    </web-socket>
+    <iron-signals on-iron-signal-slack-access-granted="_accessGranted"></iron-signals>
+    <iron-signals on-iron-signal-slack-message-posted="_messagePosted"></iron-signals>
+  </template>
+
+  <script>
+
+    (function() {
+      'use strict';
+
+      Polymer({
+        is: 'slack-socket',
+
+        properties: {
+          accessToken: {
+            type: String,
+            notify: true
+          },
+          ajaxBody: {
+            type: String,
+            computed: 'processBody(accessToken)'
+          },
+          currentSlack: {
+            type: Object,
+            notify: true,
+            observer: 'receiveState'
+          },
+          channels: {
+            type: Array,
+            notify: true
+          },
+          rtmUrl: {
+            type: String,
+            notify: true,
+            observer: 'initRTM'
+          }
+        },
+        _onOpen: function () {
+          //alert("rtm open");
+        },
+        _onClose: function () {
+          //alert("rtm close");
+        },
+        _onMessage: function (event) {
+          //alert(JSON.stringify(event.detail));
+        },
+        _onError: function (event) {
+          alert(JSON.stringify(event.detail));
+        },
+        initRTM: function(rtmUrl) {
+          this.$.rtmSocket.open();
+        },
+        receiveState: function(currentSlack) {
+          this.rtmUrl = currentSlack.url;
+        },
+        processBody: function(accessToken) {
+          return {
+            "token":accessToken,
+            "simple_latest": false
+          };
+        },
+        _accessGranted: function(e, detail, sender) {
+          this.accessToken = detail;
+          this.$.rtmStart.generateRequest();
+        },
+        _messagePosted: function(e, detail, sender) {
+          var incoming = JSON.parse(detail);
+          incoming.id = Date.now();
+          incoming.type = "message";
+          this.$.rtmSocket.send(incoming);
+        }
+      });
+    })();
+  </script>
+</dom-module>

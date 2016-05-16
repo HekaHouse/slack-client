@@ -1,0 +1,9 @@
+{
+  "firebase": "heka-house-slack-demo",
+  "public": "slack-client-demo-site",
+  "ignore": [
+    "firebase.json",
+    "**/.*",
+    "**/node_modules/**"
+  ]
+}

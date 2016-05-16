@@ -1,0 +1,196 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-signals/iron-signals.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../firebase-element/firebase-document.html">
+<!--
+# slack-client
+
+`<slack-client>` a collection  of elements representing a client for Slack Realtime Messaging API
+
+[API Docs and Demo](https://heka-house-slack-client-demo.firebaseapp.com/)
+
+[Source](http://github.com/hekahouse/slack-client/)
+
+The label is set to the path of the value.
+
+## Install
+
+    bower install --save HekaHouse/slack-client
+
+## Example
+    <slack-client
+      route="ACTIVE-ROUTE"
+      path="DISPLAY-ROUTE"
+      team="SLACK-TEAM"
+      oauth-callback="OAUTH-CALLBACK-URL"
+      client-id-path="PATH-TO-ID-ON-FIREBASE"
+      client-secret-path="PATH-TO-SECRET-ON-FIREBASE"></slack-client>
+
+In the above example replace:
+
+ACTIVE-ROUTE - currently selected route
+
+DISPLAY-ROUTE - the route used to display this element
+
+SLACK-TEAM - the team you want to connect to
+
+OAUTH-CALLBACK-URL - the OAuth callback you configured for your Slack app (should be full URL of DISPLAY-ROUTE)
+
+PATH-TO-ID-ON-FIREBASE - the Firebase path to Slack client id
+
+PATH-TO-SECRET-ON-FIREBASE - the Firebase path to Slack client secret
+
+## Note
+
+Make sure you have appropriate Firebase rules and authentication set for Slack client id and secret
+
+## Dependencies
+
+Element dependencies are managed via [Bower](http://bower.io/). You can
+install that via:
+
+    npm install -g bower
+
+Then, go ahead and download the element's dependencies:
+
+    bower install
+
+slack-client depends on:
+
+[slack-auth](https://heka-house-slack-client-demo.firebaseapp.com/slack-auth)
+
+and
+
+[slack-socket](https://heka-house-slack-demo.firebaseapp.com/slack-socket)
+
+## Related
+
+slack-client is designed for use with:
+
+[slack-input](https://heka-house-slack-demo.firebaseapp.com/slack-input)
+
+and
+
+[slack-messages](https://heka-house-slack-demo.firebaseapp.com/slack-messages) -->
+
+<dom-module id="slack-auth">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+      }
+    </style>
+    <iron-ajax
+          url="https://slack.com/api/oauth.access"
+          id="accessAjax"
+          method="POST"
+          handle-as="json"
+          params="{{ajaxBody}}"
+          last-response="{{access}}"
+          debounce-duration="300"></iron-ajax>
+    <firebase-document
+      id="slackClient"
+      location="{{clientIdPath}}"
+      data="{{clientId}}"></firebase-document>
+    <firebase-document
+      id="slackSecret"
+      location="{{clientSecretPath}}"
+      data="{{clientSecret}}"></firebase-document>
+    <iron-signals on-iron-signal-slack-access-granted="_accessGranted"></iron-signals>
+    <iron-signals on-iron-signal-slack-connect-init="_initAuth"></iron-signals>
+  </template>
+
+  <script>
+  function getURLParameter(name) {
+    return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||null;
+  }
+    (function() {
+      'use strict';
+
+      Polymer({
+        is: 'slack-auth',
+
+        properties: {
+          access: {
+            type: Object,
+            notify: true,
+            observer: 'accessGranted'
+          },
+          accessToken: {
+            type: String,
+            notify: true
+          },
+          team: {
+            type: String,
+            notify: true
+          },
+          clientId: {
+            type: String,
+            notify: true
+          },
+          clientSecret: {
+            type: String,
+            notify: true
+          },
+          callback: {
+            type: String
+          },
+          code: {
+            type: String,
+            notify: true
+          },
+          route: {
+            type: String,
+            observer:"routed"
+          },
+          ajaxBody: {
+            type: String,
+            computed: 'processBody(clientId, clientSecret, code, callback)'
+          },
+          //"https://grohio.firebaseio.com/secured/slack-id"
+          clientIdPath: {
+            type: String,
+            notify: true
+          },
+          //"https://grohio.firebaseio.com/secured/slack-secret"
+          clientSecretPath: {
+            type: String,
+            notify: true
+          }
+        },
+        processBody: function(clientId, clientSecret, code, callback) {
+          return {
+            "client_id":clientId,
+            "client_secret":clientSecret,
+            "code":code,
+            "redirect_url":callback
+          };
+        },
+        accessGranted: function(access) {
+          this.fire('iron-signal', {name: 'slack-access-granted', data: access.access_token});
+        },
+        routed: function(route) {
+          if (route === this.path) {
+            if (getURLParameter("code")) {
+              this.code = getURLParameter("code");
+              this.$.accessAjax.generateRequest();
+            }
+          }
+        },
+        _initAuth: function(e, detail, sender) {
+          window.location.replace("https://slack.com/oauth/authorize?client_id="
+          +this.clientId
+          +"&client_secret="
+          +this.clientSecret
+          +"&team="
+          +this.team
+          +"&state=client"
+          +"&scope=client"); //users:read channels:read channels:history mpim:read mpim:history im:read im:history
+        },
+        _accessGranted: function(e, detail, sender) {
+          this.accessToken = detail;
+        }
+      });
+    })();
+  </script>
+</dom-module>

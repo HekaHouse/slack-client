@@ -1,0 +1,136 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="slack-auth.html">
+<link rel="import" href="slack-socket.html">
+
+<!--
+# slack-client
+
+`<slack-client>` a collection  of elements representing a client for Slack Realtime Messaging API
+
+[API Docs and Demo](https://heka-house-slack-client-demo.firebaseapp.com/)
+
+[Source](http://github.com/hekahouse/slack-client/)
+
+The label is set to the path of the value.
+
+## Install
+
+    bower install --save HekaHouse/slack-client
+
+## Example
+    <slack-client
+      route="ACTIVE-ROUTE"
+      path="DISPLAY-ROUTE"
+      team="SLACK-TEAM"
+      oauth-callback="OAUTH-CALLBACK-URL"
+      client-id-path="PATH-TO-ID-ON-FIREBASE"
+      client-secret-path="PATH-TO-SECRET-ON-FIREBASE"></slack-client>
+
+In the above example replace:
+
+ACTIVE-ROUTE - currently selected route
+
+DISPLAY-ROUTE - the route used to display this element
+
+SLACK-TEAM - the team you want to connect to
+
+OAUTH-CALLBACK-URL - the OAuth callback you configured for your Slack app (should be full URL of DISPLAY-ROUTE)
+
+PATH-TO-ID-ON-FIREBASE - the Firebase path to Slack client id
+
+PATH-TO-SECRET-ON-FIREBASE - the Firebase path to Slack client secret
+
+## Note
+
+Make sure you have appropriate Firebase rules and authentication set for Slack client id and secret
+
+## Dependencies
+
+Element dependencies are managed via [Bower](http://bower.io/). You can
+install that via:
+
+    npm install -g bower
+
+Then, go ahead and download the element's dependencies:
+
+    bower install
+
+slack-client depends on:
+
+[slack-auth](https://heka-house-slack-client-demo.firebaseapp.com/slack-auth)
+
+and
+
+[slack-socket](https://heka-house-slack-demo.firebaseapp.com/slack-socket)
+
+## Related
+
+slack-client is designed for use with:
+
+[slack-input](https://heka-house-slack-demo.firebaseapp.com/slack-input)
+
+and
+
+[slack-messages](https://heka-house-slack-demo.firebaseapp.com/slack-messages) -->
+
+<dom-module id="slack-client">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+      }
+    </style>
+    <slack-auth
+      route="{{route}}"
+      path="{{path}}"
+      client-id-path="{{clientIdPath}}"
+      client-secret-path="{{clientSecretPath}}",
+      team="{{team}}"
+      callback="{{oauthCallback}}"></slack-auth>
+    <slack-socket channels="{{channels}}"></slack-socket>
+  </template>
+
+  <script>
+
+    (function() {
+      'use strict';
+
+      Polymer({
+        is: 'slack-client',
+
+        properties: {
+          route: {
+            type: String,
+            notify: true
+          },
+          path: {
+            type: String,
+            notify: true
+          },
+          //"https://grohio.firebaseio.com/secured/slack-id"
+          clientIdPath: {
+            type: String,
+            notify: true
+          },
+          //"https://grohio.firebaseio.com/secured/slack-secret"
+          clientSecretPath: {
+            type: String,
+            notify: true
+          },
+          team: {
+            type: String,
+            notify: true
+          },
+          oauthCallback: {
+            type: String,
+            notify: true
+          },
+          channels: {
+            type: Array,
+            notify: true
+          }
+        }
+      });
+    })();
+  </script>
+</dom-module>

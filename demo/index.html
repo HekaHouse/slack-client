@@ -1,0 +1,37 @@
+  <!doctype html>
+  <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+      <title>slack-client demo</title>
+      <script src="../bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+      <link rel="import" href="../bower_components/firebase-login/firebase-login.html">
+      <link rel="import" href="slack-client.html">
+      <link rel="import" href="slack-messages.html">
+
+
+      <style is="custom-style" include="demo-pages-shared-styles">
+        app-header span {
+          margin: 16px;
+        }
+      </style>
+    </head>
+    <body unresolved>
+      <template is="dom-bind">
+        <app-header condenses fixed effects="resize-title blend-background waterfall">
+          <span>Authenticate with Slack RTM API.</span>
+        </app-header>
+        <firebase-login
+          firebase-root="https://grohio.firebaseio.com"></firebase-login>
+        <slack-messages channels='{{channels}}' channel="general"></slack-messages>
+        <slack-client
+          route="default"
+          path="default"
+          client-id-path="https://grohio.firebaseio.com/secured/slack-id"
+          client-secret-path="https://grohio.firebaseio.com/secured/slack-secret"
+          team="grassrootsohio"
+          oauth-callback="https://heka-house-slack-demo.firebaseapp.com/slack-auth/demo/"
+          channels="{{channels}}"></slack-client>
+    </template>
+  </body>
+  </html>
